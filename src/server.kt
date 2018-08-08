@@ -4,6 +4,7 @@ import java.io.DataOutputStream
 import java.io.InputStreamReader
 import java.net.ServerSocket
 import java.net.Socket
+import kotlin.concurrent.thread
 
 
 private var socket: Socket? = null
@@ -48,6 +49,19 @@ fun closeConextion(){
     }finally {
         System.exit(0)
     }
+}
+
+fun executeConextion(ip: String, port: Int){
+    var thread = Thread(Runnable {
+         fun run(){
+            try {
+                createConextion(ip,port)
+            }finally {
+                closeConextion()
+            }
+        }
+    })
+    thread.start()
 
 }
 
