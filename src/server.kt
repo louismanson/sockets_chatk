@@ -1,68 +1,95 @@
-import java.io.BufferedReader
-import java.io.DataInputStream
-import java.io.DataOutputStream
-import java.io.InputStreamReader
+import java.io.*
 import java.net.ServerSocket
 import java.net.Socket
+import java.util.*
 import kotlin.concurrent.thread
 
 
 private var socket: Socket? = null
+private var serverSocket: ServerSocket? = null
 private var inBuffer: DataInputStream? = null
 private var outBuffer: DataOutputStream? = null
+internal var escaner = Scanner(System.`in`)
 
-fun createConextion(ip: String, port: Int) {
-    try {
-        socket = Socket(ip,port)
-        println("Server Started and listening to the port 25000")
+
+private fun createConnection(port: Int){
+    try{
+        serverSocket = ServerSocket(port)
+        println("waiting...")
+        socket = serverSocket?.accept()
+        println("OK")
     }catch (e: Exception){
         e.printStackTrace()
-    }
-}
-
-fun dataFlow(){
-    try {
-        inBuffer = DataInputStream(socket?.getInputStream())
-        outBuffer = DataOutputStream(socket?.getOutputStream())
-        outBuffer?.flush()
-    }catch (e: Exception){
-        e.printStackTrace()
-    }
-}
-
-fun sendData(message: String){
-    try {
-        outBuffer?.writeUTF(message)
-        outBuffer?.flush()
-    }catch (e: Exception){
-
-    }
-}
-
-fun closeConextion(){
-    try {
-        outBuffer?.close()
-        inBuffer?.close()
-        socket?.close()
-    }catch (e: Exception){
-        e.printStackTrace()
-    }finally {
         System.exit(0)
     }
 }
 
-fun executeConextion(ip: String, port: Int){
-    var thread = Thread(Runnable {
-         fun run(){
+private fun flow(){
+    try {
+        inBuffer = DataInputStream(socket?.getInputStream())
+        outBuffer = DataOutputStream(socket?.getOutputStream())
+        outBuffer?.flush()
+    }catch (e: IOException){
+        e.printStackTrace()
+    }
+}
+
+private fun reciveData(){
+    var st: String
+    try {
+        while (true){
+            st = inBuffer!!.readUTF()
+            println("Client: $st")
+            print("You: ")
+        }
+    }catch (e: IOException){
+        closeConnection()
+    }
+}
+
+private fun send(message: String) {
+    try {
+        outBuffer?.writeUTF(message)
+        outBuffer?.flush()
+    } catch (e: IOException) {
+
+    }
+}
+
+private fun writeData() {
+    while (true) {
+        print("You: ")
+        send(escaner.nextLine())
+    }
+}
+
+private fun closeConnection() {
+    try {
+        inBuffer?.close()
+        outBuffer?.close()
+        socket?.close()
+    } catch (e: IOException) {
+        println("Excepción en cerrarConexion(): " + e.message)
+    } finally {
+        println("Conversación finalizada....")
+        System.exit(0)
+
+    }
+}
+
+private fun executeConnection(puerto: Int) {
+    val thread = Thread(Runnable {
+        while (true) {
             try {
-                createConextion(ip,port)
-            }finally {
-                closeConextion()
+                createConnection(puerto)
+                flow()
+                reciveData()
+            } finally {
+                closeConnection()
             }
         }
     })
     thread.start()
-
 }
 
 fun main(args: Array<String>){
@@ -93,3 +120,5 @@ fun main(args: Array<String>){
         }catch (e: Exception){}
     }
 }
+
+
