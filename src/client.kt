@@ -50,7 +50,7 @@ private fun reciveData(){
     }
 }
 
-private fun writeData90{
+private fun writeData(){
     var input: String
     while (true){
         println("You: ")
