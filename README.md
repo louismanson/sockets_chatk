@@ -17,7 +17,7 @@ marco.pena@cetys.mx
 
 
 
-Licenses
+License
 ----
-
+Apache License 2.0
 
