@@ -2,22 +2,21 @@ import java.io.*
 import java.net.ServerSocket
 import java.net.Socket
 import java.util.*
-import kotlin.concurrent.thread
 
 
 private var socket: Socket? = null
 private var serverSocket: ServerSocket? = null
 private var inBuffer: DataInputStream? = null
 private var outBuffer: DataOutputStream? = null
-internal var escaner = Scanner(System.`in`)
-
+private var keyboard = Scanner(System.`in`)
 
 private fun createConnection(port: Int){
     try{
         serverSocket = ServerSocket(port)
-        println("waiting...")
+        println("Waiting for a client...")
         socket = serverSocket?.accept()
-        println("OK")
+        println("Client connected")
+        print("You: ")
     }catch (e: Exception){
         e.printStackTrace()
         System.exit(0)
@@ -34,12 +33,12 @@ private fun flow(){
     }
 }
 
-private fun reciveData(){
+private fun receiveData(){
     var st: String
     try {
         while (true){
             st = inBuffer!!.readUTF()
-            println("Client: $st")
+            println("\nClient: $st")
             print("You: ")
         }
     }catch (e: IOException){
@@ -59,7 +58,7 @@ private fun send(message: String) {
 private fun writeData() {
     while (true) {
         print("You: ")
-        send(escaner.nextLine())
+        send(keyboard.nextLine())
     }
 }
 
@@ -69,9 +68,9 @@ private fun closeConnection() {
         outBuffer?.close()
         socket?.close()
     } catch (e: IOException) {
-        println("Excepción en cerrarConexion(): " + e.message)
+        e.printStackTrace()
     } finally {
-        println("Conversación finalizada....")
+        println("Connection closed")
         System.exit(0)
 
     }
@@ -83,7 +82,7 @@ private fun executeConnection(puerto: Int) {
             try {
                 createConnection(puerto)
                 flow()
-                reciveData()
+                receiveData()
             } finally {
                 closeConnection()
             }
@@ -92,33 +91,15 @@ private fun executeConnection(puerto: Int) {
     thread.start()
 }
 
+@Throws(IOException::class)
 fun main(args: Array<String>){
-    try {
-        var port = 25000
-        val serverSocket = ServerSocket(port)
-        println("Server Started and listening to the port 25000")
+    val buffer = BufferedReader(InputStreamReader(System.`in`))
+    print("Port [25000 default]: ")
+    var port =  buffer.readLine()
+    if(port.isEmpty()) port = "25000"
+    executeConnection(port.toInt())
+    writeData()
 
-        //Server is running always. This is done using this while(true) loop
-        while (true) {
-            //Reading the message from the client
-            socket = serverSocket.accept()
-            var ar = socket?.getInputStream()
-            var isr = InputStreamReader(ar)
-            var br = BufferedReader(isr)
-            var message = br.readLine()
-            println("Client: " + message)
-        }
-
-
-
-
-    }catch (e: Exception){
-
-    }finally {
-        try {
-            socket?.close()
-        }catch (e: Exception){}
-    }
 }
 
 
