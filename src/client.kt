@@ -1,4 +1,5 @@
 import java.io.*
+import java.net.ConnectException
 import java.net.InetAddress
 import java.net.Socket
 import java.util.*
@@ -6,14 +7,15 @@ import java.util.*
 private var socket: Socket? = null
 private var inBuffer: DataInputStream? = null
 private var outBuffer: DataOutputStream? = null
-internal var teclado = Scanner(System.`in`)
+private var keyboard = Scanner(System.`in`)
 
 
 private fun createConnection(ip: String, port: Int) {
     try {
-        socket = Socket(ip,port)
         println("Server Started and listening to the port 25000")
-    }catch (e: Exception){
+        socket = Socket(InetAddress.getByName(ip),port)
+        print("You: ")
+    }catch (e: ConnectException){
         e.printStackTrace()
     }
 }
@@ -37,12 +39,12 @@ private fun sendData(message: String){
     }
 }
 
-private fun reciveData(){
-    var st = ""
+private fun receiveData(){
+    var st: String
     try {
         while (true){
             st = inBuffer!!.readUTF()
-            println("Client: $st")
+            println("\nServer: $st")
             print("You: ")
         }
     }catch (e: IOException){
@@ -53,22 +55,20 @@ private fun reciveData(){
 private fun writeData(){
     var input: String
     while (true){
-        println("You: ")
-        input = teclado.nextLine()
+        print("You: ")
+        input = keyboard.nextLine()
         if (input.isNotEmpty()){
             sendData(input)
         }
     }
 }
 
-
-
 private fun closeConnection(){
     try {
         outBuffer?.close()
         inBuffer?.close()
         socket?.close()
-        println("end")
+        println("Connection closed")
     }catch (e: IOException){
         e.printStackTrace()
     }finally {
@@ -76,53 +76,37 @@ private fun closeConnection(){
     }
 }
 
-
 fun executeConnection(ip: String, port: Int){
     val thread = Thread(Runnable {
         try {
             createConnection(ip,port)
             dataFlow()
-
+            receiveData()
         }finally {
             closeConnection()
         }
     })
     thread.start()
-
 }
 
+@Throws(IOException::class)
 fun main (arg: Array<String>){
-    while (true){
-        val buffer = BufferedReader(InputStreamReader(System.`in`))
-        print("you: ")
-        var message =  buffer.readLine()
 
-        try {
-            var host = "localhost"
-            var port = 25000
-            var address = InetAddress.getByName(host)
-            socket = Socket(address,port)
+    val buffer = BufferedReader(InputStreamReader(System.`in`))
 
-
-            var os = socket?.getOutputStream()
-            var osw = OutputStreamWriter(os)
-            var bw = BufferedWriter(osw)
-            var sendMessage = message+"\n"
-            bw.write(sendMessage)
-            bw.flush()
-
-
-        }catch (e: Exception){
-            e.printStackTrace()
-        }finally {
-            try {
-                socket?.close()
-            }catch (e: Exception){
-                e.printStackTrace()
-            }
-        }
+    print("IP [localhost default]: ")
+    var ip = buffer.readLine()
+    if(ip.isEmpty()){
+        ip = "localhost"
     }
 
+    print("Port [25000 default]: ")
+    var port = buffer.readLine()
+    if (port.isEmpty()) {
+        port = "25000"
+    }
 
+    executeConnection(ip, port.toInt())
+    writeData()
 
 }
